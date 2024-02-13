@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "extractderoulepedagogique"
+version = "0.1.0"
+description = ""
+authors = ["Jérome Marchand <jerome.marchand@zenika.com>"]
+readme = "README.md"
+
+[tool.poetry.scripts]
+extractderoulepedagogique = "extractderoulepedagogique.main:main"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+ruamel-yaml = "^0.18.5"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

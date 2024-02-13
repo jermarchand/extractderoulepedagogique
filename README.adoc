@@ -1,0 +1,101 @@
+= extractderoulepedagogique
+:stem:
+
+Ce projet propose une gestion de cycle de vie pour le "déroulé pédagogique".
+
+Le "déroulé pédagogique" doit contenir :
+
+* Le plan de la formation (les principaux chapitres)
+* Le type d'activité pour le chapitre
+* L'outil utilisé pour le chapitre
+* Quel objectif de la formation le chapitre couvre
+* La durée du chapitre en minutes
+
+Les destinataires de ce fichier sont :
+
+- les formateurs
+- le responsable pédagogique
+- une API d'un outil "TMS"
+
+
+Le format de ce fichier est le CSV.
+
+La source de vérité est toujours les fichiers Markdown des slides de la formation.
+Mais il ne faut pas perdre des modifications manuel faites dans les fichiers CSV de la version précédente.
+
+NOTE: La génération d'un squelette de formation (les fichiers Markdown) à partir de ce fichier CSV sera envisagé dans un second temps.
+
+== Initialisation
+
+Pour l'initialisation (projet sans "déroulé pédagogique"), une première version est créé à partir d'une extraction :
+
+. Lecture du fichier `slides.json`
+. Ouverture de chaque fichier Markdown listé dans `slides.json`
+. Extraction :
+.. des titres niveau 1 (lignes commençant par `# `)
+.. des titres niveau 2 (lignes commençant par `## `)
+.. des TP (ligne commençant par '<!-- .slide: class="page-tp" ')
+. exporté dans un fichier CSV
+
+Des valeurs par défaut sont appliqué :
+
+* L'activité : `Slides et Explication` ou `TP et Démo`
+* L'outil: `Strigo`
+* L'objectif : `To be defined`
+
+
+La durée est calculée par approximation.
+Elle est préfixée par un `~`.
+Et elle est calculée avec la formule :
+
+[stem]
+++++
+"nb sous chapitre" * "durée total en minutes de la formation" / "nb de chapitre dans la formation"
+++++
+
+Exemple :
+
+[source,csv]
+--
+id;level;title;activity;tool;objective;duration
+0;1;# Keycloak;Slides et Explication;Strigo;To be defined;0
+1;2;## Logistique;Slides et Explication;Strigo;To be defined;0
+2;2;## Préface;Slides et Explication;Strigo;To be defined;0
+...
+19;2;TP1 : Mise en place de l’environnement;TP et Démo;Strigo;To be defined;0
+--
+
+== Améliorations dans les Slides
+
+Suite à l'initialisation une mise à jours des fichiers Markdown peut aider à améliorer les prochaines extraction :
+
+. le "level" des chapitres
+. le nommage des chapitres
+. le nommage des TPs
+
+En ajoutant un https://frontmatter.codes/docs/markdown[FrontMatter] (format YAML), vous pouvez remplacer les valeurs par défaut.
+
+[source,yaml]
+--
+activity: Slides et Explication
+activity_tp: TP et Démo
+tool: Strigo, Miro, Mural, Teams et tous les outils dont j'ai besoin pour ce chapitre
+objective: un des items du chapitre "Objectifs" du fichier `PLAN.md`
+duration: 100
+--
+
+== Comparaison et mise à jour
+
+Après chaque exécution, il faut "comparer" la source de vérité avec le résultat d'un précédent extract, qui peut avoir été mise à jour manuellement.
+Pour chaque chapitre, c'est son titre qui servira de donnée pivot.
+Il faut donc le trouver dans le précédent extract (CSV existant) et reporter dans le nouveau CSV les valeurs qui ne sont pas celles par défaut.
+
+* L'activité est récupérée si elle n'est pas "Slides et Explication" ou "TP et Démo"
+* L'outil est récupérée s'il n'est pas "Strigo"
+* L'objectif est récupérée s'il n'est pas "To be defined"
+* La durée est récupérée si elle ne commence pas par "~"
+
+
+Limites :
+
+* Un changement de chapitre dans les slides perdra les modifications manuel
