@@ -1,26 +1,42 @@
-FROM python:3.11-buster as builder
+############ Stage ############
+FROM python:3.11-buster as python-poetry-base
 
-RUN pip install poetry==1.4.2
+# https://python-poetry.org/docs#ci-recommendations
+ENV POETRY_VERSION=1.3.2
+ENV POETRY_HOME=/opt/poetry
+ENV POETRY_VIRTUALENVS_IN_PROJECT=true
+ENV POETRY_NO_INTERACTION=1
+ENV PATH="$POETRY_HOME/bin:$PATH"
 
-ENV POETRY_NO_INTERACTION=1 \
-    POETRY_VIRTUALENVS_IN_PROJECT=1 \
-    POETRY_VIRTUALENVS_CREATE=1 \
-    POETRY_CACHE_DIR=/tmp/poetry_cache
 
-WORKDIR /app
+###############################################################################
+# POETRY BUILDER IMAGE - Installs Poetry and dependencies
+###############################################################################
+FROM python-poetry-base AS python-poetry-builder
+RUN apt-get update \
+    && apt-get install --no-install-recommends --assume-yes curl
+# Install Poetry via the official installer: https://python-poetry.org/docs/master/#installing-with-the-official-installer
+# This script respects $POETRY_VERSION & $POETRY_HOME
+RUN curl -sSL https://install.python-poetry.org | python3 -
 
-COPY pyproject.toml poetry.lock ./
-RUN touch README.md
 
-RUN --mount=type=cache,target=$POETRY_CACHE_DIR poetry install --without dev --no-root
+###############################################################################
+# POETRY RUNTIME IMAGE - Copies the poetry installation into a smaller image
+###############################################################################
+FROM python-poetry-base AS python-poetry
+COPY --from=python-poetry-builder $POETRY_HOME $POETRY_HOME
 
-FROM python:3.11-slim-buster as runtime
+# Copy Dependencies
+COPY poetry.lock ./
+COPY pyproject.toml ./
 
-ENV VIRTUAL_ENV=/app/.venv \
-    PATH="/app/.venv/bin:$PATH"
+# [OPTIONAL] Validate the project is properly configured
+RUN poetry check
 
-COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
+# Install Dependencies
+RUN poetry install --no-interaction --no-cache --without dev
+RUN poetry env info
 
-COPY extractderoulepedagogique ./extractderoulepedagogique
+COPY . .
 
-ENTRYPOINT ["python", "-m", "extractderoulepedagogique.main"]
+ENTRYPOINT ["poetry","run", "python", "/extractderoulepedagogique/main.py", "/github/workspace"]

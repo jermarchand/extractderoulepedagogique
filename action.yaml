@@ -1,0 +1,6 @@
+# action.yml
+name: 'Extract Deroule Pedagogique'
+description: 'Extract Deroule Pedagogique'
+runs:
+  using: 'docker'
+  image: 'Dockerfile'

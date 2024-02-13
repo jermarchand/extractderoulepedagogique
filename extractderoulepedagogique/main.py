@@ -166,15 +166,15 @@ def _merge_with_previous_version(csv_filename: str, toc: list):
     """
     logging.info("Merge with previous extract " + csv_filename + " file")
 
-    prev_csv_filename = "tmp/tmp.csv"
+    prev_csv_filename = "/tmp/tmp.csv"
     logging.info("Moving from " + csv_filename + " to " + prev_csv_filename)
     shutil.move(csv_filename, prev_csv_filename)
 
     prev_csv_indexed = {}
 
     # index prev_csv_filename, by title
-    with open(prev_csv_filename, newline="") as existing_csvfile:
-        existing_csv_content = csv.reader(existing_csvfile, delimiter=";")
+    with open(prev_csv_filename, newline="\n") as existing_csvfile:
+        existing_csv_content = csv.reader(existing_csvfile, delimiter=",")
 
         for row in existing_csv_content:
             prev_csv_indexed[row[2]] = row
@@ -260,9 +260,13 @@ def _save_in_csv_format_after_merge_with_prev_version(
         _merge_with_previous_version(csv_filename, toc)
 
     logging.info("Save extract in " + csv_filename + " file")
-    with open(csv_filename, "w", newline="") as file:
+    with open(csv_filename, "w", newline="\n") as file:
 
-        writer = csv.DictWriter(file, fieldnames=fields, delimiter=";")
+        writer = csv.DictWriter(
+            file,
+            fieldnames=fields,
+            dialect="unix",
+        )
 
         # write the header
         writer.writeheader()
@@ -313,6 +317,7 @@ def main(argv: Sequence[str] | None = None):
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "path",
+        default="/github/workspace",
         help="Path where to find `PLAN.md` and `Slides\slides.json`.",
     )
     args = parser.parse_args(argv)
