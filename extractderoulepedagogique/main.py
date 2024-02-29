@@ -277,13 +277,20 @@ def _save_in_csv_format_after_merge_with_prev_version(
 
 def _get_training_name(path: str) -> str:
     """
-    First line of PLAN.md containt the training name
+    First chapter name of PLAN.md contains the training name
     """
-    firstLine = "Unreadable"
+    firstLine = None
     with open(path + "/PLAN.md", "r") as plan:
-        firstLine = plan.readline()
 
-    firstLine = firstLine.replace("#", "").strip().replace(" ", "-").lower()
+        lines = plan.readlines()
+        for tmp in lines:
+            if tmp.startswith("# "):
+                firstLine = tmp.replace("#", "").strip().replace(" ", "-").lower()
+                break
+
+    if firstLine == None:
+        logging.error("Training name not found in PLAN.md")
+        exit()
 
     logging.info("The rewrite training name is : %s", firstLine)
 
